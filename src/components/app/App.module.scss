@@ -1,0 +1,95 @@
+// методология BEM явно не создавалась в расчёте
+// на реакт приложения.......
+
+.page {
+    background-color: rgb(255, 230, 192);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+._container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page__question-block {
+}
+
+.question-block,
+.result-block {
+    margin-top: 100px;
+    @media (max-width: 720px) {
+        margin-top: 25px;
+    }
+}
+
+.question-block__container,
+.result-block__container {
+    display: flex;
+    justify-content: center;
+    padding: 15px;
+}
+
+.question-block__container {
+    // button {
+    //     border: none;
+    //     padding: 7px 20px;
+    //     margin-top: 20px;
+
+    //     &:hover {
+    //         background-color: rgb(199, 199, 199);
+    //     }
+
+    //     &:active {
+    //         background-color: whitesmoke;
+    //     }
+    // }
+}
+
+// поскольку родитель является flex боксом,
+// то и ширину ограничивать не пришлось
+.question-block__question-window {
+}
+
+.qusetion-window {
+    > *:first-child {
+        margin-bottom: 10px;
+    }
+
+    &__next-button {
+        border: none;
+        padding: 7px 20px;
+        // margin-top: 20px;
+
+        &:hover {
+            background-color: rgb(199, 199, 199);
+        }
+
+        &:active {
+            background-color: whitesmoke;
+        }
+    }
+}
+
+.question-block__question-window,
+.result-block__window {
+    background-color: rgb(255, 255, 255);
+    border-radius: 25px;
+    width: 100%;
+    min-height: 400px;
+    padding: 25px 30px;
+
+    @media (max-width: 720px) {
+        padding: 12.5px 15px;
+    }
+}
+
+.page__result-block {
+}
+
+.result-block__container {
+}
+
+.result-block__window {
+}
