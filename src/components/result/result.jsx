@@ -18,7 +18,7 @@ export function Result({ arrayOfQuestions, userAnswers }) {
                             <li>Your answer: {el.userAnswer}</li>
                             <li>
                                 Correct answer:{" "}
-                                {arrayOfQuestions[index].correctAnswer}
+                                {arrayOfQuestions[index].correctAnswer.map(el => el)}
                             </li>
                             <li>
                                 Your answer is{" "}

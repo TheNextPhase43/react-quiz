@@ -8,7 +8,7 @@ export function App() {
     const [questionsData, setQuestionsData] = useState({
         currentQuestionId: 0,
         isQuizCompleted: false,
-        checkedAnswerId: null,
+        checkedAnswerId: [],
         userAnswers: [],
     });
     // const [currentQuestionId, setCurrentQuestionId] = useState(0);
@@ -33,7 +33,7 @@ export function App() {
 
         // выход из функции если не выбран ответ
         // (да, я сам забыл что это делает ппц я идиот)
-        if (questionsData.checkedAnswerId === null) return;
+        if (questionsData.checkedAnswerId.length === 0) return;
 
         const currentQuestion =
             arrayOfQuestions[questionsData.currentQuestionId];
@@ -62,9 +62,16 @@ export function App() {
                         // лапшичка)
                         questionId: prev.currentQuestionId,
 
+                        // здесь идёт проверка есть ли в массиве айди верных ответов
+                        // айди, который сейчас выбрал пользователь
+                        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // допилить совместимость с несколькими вариантами ответа,
+                        // сделать проверку не просто есть ли в массиве верных выбранный,
+                        // а совпадают ли все ответы юзера с айди в массиве верных ответов
+                        // для этого сначала допилить добавление в "чекнутые" ответы юзера,
+                        // если их много
                         isUserAnswerCorrect:
-                            prev.checkedAnswerId ===
-                            currentQuestion.correctAnswerId,
+                        currentQuestion.correctAnswerId.includes(prev.checkedAnswerId),
 
                         userAnswer:
                             currentQuestion.answers[prev.checkedAnswerId],
@@ -82,7 +89,7 @@ export function App() {
                 // но потом я додумался взять под контроль состояние checked
                 // всех инпутов, установив в него условие, что cheked будет true,
                 // только при совпадении его индекса со стейтом checkedAnswerId
-                checkedAnswerId: null,
+                checkedAnswerId: [],
 
                 // переключение на следующий вопрос
                 currentQuestionId: prev.currentQuestionId + 1,
@@ -174,21 +181,28 @@ export function App() {
                                 `}
                             >
                                 <Question
+                                // это именно данные текущего вопроса!!!
+                                // то есть текст, варианты ответа и
+                                // корректный ответ
                                     questionData={
                                         arrayOfQuestions[
                                             questionsData.currentQuestionId
                                         ]
                                     }
-                                    setQuestionsData={setQuestionsData}
+                                    // а вот это информация по всему quiz'у
+                                    // (я обосрался с неймнингом)
+                                    setQuizData={setQuestionsData}
+                                    quizData={questionsData}
                                     checkedAnswerId={
                                         questionsData.checkedAnswerId
                                     }
                                 />
                                 <button
-                                className={`
+                                    className={`
                                     ${s["qusetion-window__next-button"]}
                                     `}
-                                 onClick={() => handleNextButtonClick()}>
+                                    onClick={() => handleNextButtonClick()}
+                                >
                                     next
                                 </button>
                             </div>
