@@ -2,23 +2,46 @@
     .answersBlock {
         overflow-y: scroll;
         max-height: 300px;
-        box-shadow: gray 0 0 15px;
-        margin-bottom: 20px;
-    }
+        // box-shadow: gray 0 0 15px;
+        border: 2px solid rgb(222, 179, 241);
+        box-sizing: border-box;
+        border-radius: 10px;
+        padding: 9px 12px;
 
-    ul {
-        margin-bottom: 10px;
+        ul {
+            margin-bottom: 10px;
+            padding: 5px 8px;
+            box-sizing: border-box;
+            border-radius: 3px;
 
-        &:nth-child(even) {
-            background-color: rgb(228, 228, 228);
+            *:first-child {
+                margin-bottom: 5px;
+                font-size: 19px;
+            }
+
+            *:not(:last-child):not(:first-child) {
+                margin-bottom: 2px;
+            }
+
+            &:nth-child(even) {
+                background-color: rgb(255, 254, 241);
+            }
+        }
+
+        .correct {
+            color: rgb(33, 199, 33);
+        }
+
+        .wrong {
+            color: red;
         }
     }
 
-    .correct {
-        color: rgb(30, 233, 30);
+    *:first-child {
+        margin-bottom: 25px;
     }
 
-    .wrong {
-        color: red;
+    *:not(:last-child):not(:first-child) {
+        margin-bottom: 10px;
     }
 }

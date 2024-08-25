@@ -17,8 +17,13 @@ export function Result({ arrayOfQuestions, userAnswers }) {
                             <li>{arrayOfQuestions[index].questionText}</li>
                             <li>Your answer: {el.userAnswer}</li>
                             <li>
-                                Correct answer:{" "}
-                                {arrayOfQuestions[index].correctAnswer.map(el => el)}
+                                {/* изначально я в самом файле questions.js
+                                поставил лишние скобки напротив значения
+                                correctAnswer, и в итоге даже сплитая или
+                                мэпая массив возвращал всегда целый массив,
+                                что стало причиной лишней запятой, пофиксить
+                                которую как, я додумался спустя 40 минут */}
+                                Correct answer: {el.correctAnswer.join(" ")}
                             </li>
                             <li>
                                 Your answer is{" "}

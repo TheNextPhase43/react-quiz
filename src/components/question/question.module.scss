@@ -1,17 +1,17 @@
 .questionsBlock {
     background-color: rgb(255, 186, 186);
-    padding: 7px 12px;
+    padding: 12px;
     border-radius: 15px;
 }
 
 .questionTitle {
-    margin-bottom: 25px;
+    margin: 0 0 15px 10px;
     font-size: 25px;
 }
 
 .questionText {
     font-size: 20px;
-    margin-bottom: 15px;
+    margin: 0 0 15px 10px;
 }
 
 .answersBlock {
@@ -26,10 +26,12 @@
     display: flex;
     align-items: center;
     user-select: none;
+    border-radius: 3px;
 }
 
 // кружок выбора
 .answerInput {
+    margin-left: 3px;
 }
 
 // текст ответов

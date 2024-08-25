@@ -11,6 +11,7 @@ export function App() {
         checkedAnswerId: [],
         userAnswers: [],
     });
+
     // const [currentQuestionId, setCurrentQuestionId] = useState(0);
     // const [isQuizCompleted, setIsQuizCompleted] = useState(false);
     // const [checkedAnswerId, setCheckedAnswerId] = useState(null);
@@ -32,11 +33,51 @@ export function App() {
         // не слишком то безопасно)
 
         // выход из функции если не выбран ответ
-        // (да, я сам забыл что это делает ппц я идиот)
         if (questionsData.checkedAnswerId.length === 0) return;
 
         const currentQuestion =
             arrayOfQuestions[questionsData.currentQuestionId];
+
+        // данные об ответе юзера для записи
+        let newIsUserAnswerCorrect = null;
+        let newUserAnswer = "";
+
+        // распределение данных для записи на вывод
+        if (currentQuestion.isSeveralAnswers) {
+            // Верный ли ответ юзера---------------------------------------------------------
+            // Сортировка по возрастанию Чтобы сравнивать массивы было
+            // удобнее. Мало ли в каком порядке придут айдишники верных
+            // ответов из БД вопросов
+            const sortedCorrectAnswersIds =
+                currentQuestion.correctAnswerId.sort((a, b) => a - b);
+            const sortedCheckedAnswersIds = questionsData.checkedAnswerId.sort(
+                (a, b) => a - b
+            );
+            // сравнение массивов айди верных ответов, и айди ответов,
+            // которые выбрал юзер (может быть это можно сделать и
+            // по элегантнее)
+            newIsUserAnswerCorrect =
+                sortedCorrectAnswersIds.toString() ===
+                sortedCheckedAnswersIds.toString();
+            // Ответ юзера ------------------------------------------------------------------
+            // добавляем в строку все ответы по айди, выбранным пользователем
+            // из массива ответов на вопрос
+            sortedCheckedAnswersIds.forEach((el, i) => {
+                newUserAnswer += currentQuestion.answers[el] + " ";
+            });
+            // ------------------------------------------------------------------------------
+        } else {
+            // Верный ли ответ юзера---------------------------------------------------------
+            // здесь идёт проверка есть ли в массиве айди верных ответов
+            // айди, который сейчас выбрал пользователь
+            newIsUserAnswerCorrect = currentQuestion.correctAnswerId.includes(
+                questionsData.checkedAnswerId
+            );
+            // Ответ юзера ------------------------------------------------------------------
+            newUserAnswer =
+                currentQuestion.answers[questionsData.checkedAnswerId];
+            // ------------------------------------------------------------------------------
+        }
 
         // обновляем данные о вопросе
         setQuestionsData((prev) => {
@@ -62,19 +103,9 @@ export function App() {
                         // лапшичка)
                         questionId: prev.currentQuestionId,
 
-                        // здесь идёт проверка есть ли в массиве айди верных ответов
-                        // айди, который сейчас выбрал пользователь
-                        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        // допилить совместимость с несколькими вариантами ответа,
-                        // сделать проверку не просто есть ли в массиве верных выбранный,
-                        // а совпадают ли все ответы юзера с айди в массиве верных ответов
-                        // для этого сначала допилить добавление в "чекнутые" ответы юзера,
-                        // если их много
-                        isUserAnswerCorrect:
-                        currentQuestion.correctAnswerId.includes(prev.checkedAnswerId),
+                        isUserAnswerCorrect: newIsUserAnswerCorrect,
 
-                        userAnswer:
-                            currentQuestion.answers[prev.checkedAnswerId],
+                        userAnswer: newUserAnswer,
 
                         // у нас и так есть это в массиве вопросов, но я решил
                         // добавить полные сведения об ответе в объект, для
@@ -181,9 +212,9 @@ export function App() {
                                 `}
                             >
                                 <Question
-                                // это именно данные текущего вопроса!!!
-                                // то есть текст, варианты ответа и
-                                // корректный ответ
+                                    // это именно данные текущего вопроса!!!
+                                    // то есть текст, варианты ответа и
+                                    // корректный ответ
                                     questionData={
                                         arrayOfQuestions[
                                             questionsData.currentQuestionId

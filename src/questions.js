@@ -22,9 +22,9 @@ class Question {
         // (ниже) правильные ответы являются массивами (для удобства)
         // ответ то может быть и один, но для удобства всё всегда в массиве
         // воизбежании лишних условий
-        this.correctAnswer = [
-            this.answers.filter((el, id) => this.correctAnswerId.includes(id)),
-        ];
+        this.correctAnswer = this.answers.filter((el, id) =>
+            this.correctAnswerId.includes(id)
+        );
         // this.correctAnswer = this.isSeveralAnswers
         //     ? // вот этот адаптив с разным количеством ответов был реально сложным
         //       // вообще по идее можно было бы всегда использовать для одного/нескольких
