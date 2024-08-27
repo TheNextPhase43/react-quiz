@@ -1,0 +1,21 @@
+.chooseBlock {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+
+    .chooseTests {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        flex-grow: 0.75;
+    }
+
+    .test {
+        padding: 10px;
+    }
+
+    * {
+        border: 1px solid black;
+    }
+}

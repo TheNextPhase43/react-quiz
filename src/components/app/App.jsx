@@ -1,11 +1,15 @@
-import { arrayOfQuestions } from "../../questions.js";
+import { quizTestsArray } from "../../questions0.js";
+import { Choose } from "../Choose/Choose.jsx";
 import { Question } from "../question/question.jsx";
 import { Result } from "../result/result.jsx";
 import { useState, useEffect, useRef } from "react";
 import s from "./App.module.scss";
 
 export function App() {
-    const [questionsData, setQuestionsData] = useState({
+    const [quizData, setQuizData] = useState({
+        isTestChoosen: false,
+        choosenTest: null,
+        arrayOfQuestions: null,
         currentQuestionId: 0,
         isQuizCompleted: false,
         checkedAnswerId: [],
@@ -33,15 +37,16 @@ export function App() {
         // не слишком то безопасно)
 
         // выход из функции если не выбран ответ
-        if (questionsData.checkedAnswerId.length === 0) return;
+        if (quizData.checkedAnswerId.length === 0) return;
 
         const currentQuestion =
-            arrayOfQuestions[questionsData.currentQuestionId];
+            quizData.arrayOfQuestions[quizData.currentQuestionId];
 
         // данные об ответе юзера для записи
         let newIsUserAnswerCorrect = null;
-        let newUserAnswer = "";
+        let newUserAnswer = [];
 
+        // лапшичка)
         // распределение данных для записи на вывод
         if (currentQuestion.isSeveralAnswers) {
             // Верный ли ответ юзера---------------------------------------------------------
@@ -50,7 +55,7 @@ export function App() {
             // ответов из БД вопросов
             const sortedCorrectAnswersIds =
                 currentQuestion.correctAnswerId.sort((a, b) => a - b);
-            const sortedCheckedAnswersIds = questionsData.checkedAnswerId.sort(
+            const sortedCheckedAnswersIds = quizData.checkedAnswerId.sort(
                 (a, b) => a - b
             );
             // сравнение массивов айди верных ответов, и айди ответов,
@@ -63,7 +68,7 @@ export function App() {
             // добавляем в строку все ответы по айди, выбранным пользователем
             // из массива ответов на вопрос
             sortedCheckedAnswersIds.forEach((el, i) => {
-                newUserAnswer += currentQuestion.answers[el] + " ";
+                newUserAnswer.push(currentQuestion.answers[el]);
             });
             // ------------------------------------------------------------------------------
         } else {
@@ -71,16 +76,18 @@ export function App() {
             // здесь идёт проверка есть ли в массиве айди верных ответов
             // айди, который сейчас выбрал пользователь
             newIsUserAnswerCorrect = currentQuestion.correctAnswerId.includes(
-                questionsData.checkedAnswerId
+                quizData.checkedAnswerId
             );
             // Ответ юзера ------------------------------------------------------------------
-            newUserAnswer =
-                currentQuestion.answers[questionsData.checkedAnswerId];
+            // newUserAnswer = currentQuestion.answers[quizData.checkedAnswerId];
+            newUserAnswer.push(
+                currentQuestion.answers[quizData.checkedAnswerId]
+            );
             // ------------------------------------------------------------------------------
         }
 
         // обновляем данные о вопросе
-        setQuestionsData((prev) => {
+        setQuizData((prev) => {
             // prev, это те же данные о вопросах,
             // но я думаю что использовать сам объект-стейт
             // в сеттере сомнительная идея
@@ -100,7 +107,6 @@ export function App() {
                     ...prev.userAnswers,
                     // + новые данные в массив об ответе юзера
                     {
-                        // лапшичка)
                         questionId: prev.currentQuestionId,
 
                         isUserAnswerCorrect: newIsUserAnswerCorrect,
@@ -127,7 +133,8 @@ export function App() {
 
                 // переключение на результаты
                 isQuizCompleted:
-                    prev.currentQuestionId === arrayOfQuestions.length - 1,
+                    prev.currentQuestionId ===
+                    quizData.arrayOfQuestions.length - 1,
             };
         });
         // --------------   outdated
@@ -162,15 +169,47 @@ export function App() {
             // переключение на следующий вопрос
             // setCurrentQuestionId((prev) => prev + 1);
             // переключение на результаты
-            // setIsQuizCompleted(currentQuestionId === arrayOfQuestions.length - 1);
+            // setIsQuizCompleted(currentQuestionId === quizData.arrayOfQuestions.length - 1);
         }
     }
 
     return (
         <>
             <div className={s.page}>
-                {!questionsData.isQuizCompleted ? (
-                    // questions part-----------------------------------------------------------------------------
+                {/* вообще говоря мне не внушает доверия вложенность
+                с условиями для рендера определённой части приложения.
+                вероятно это можно сделать простым условием, без вложения,
+                но в принципе, одинарная вложенность пока не образовала
+                тернарный ад, так что пусть будет */}
+                {/* выбор теста ----------------------------------------------------------------------*/}
+                {!quizData.isTestChoosen ? (
+                    <div
+                        className={`
+                            ${s["page__choose-block"]} 
+                            ${s["choose-block"]}
+                            `}
+                    >
+                        <div
+                            className={`
+                                ${s["choose-block__container"]} 
+                                ${s["_container"]}
+                                `}
+                        >
+                            <div
+                                className={`
+                                ${s["choose-block__window"]}
+                                `}
+                            >
+                                <Choose
+                                    quizTestsArray={quizTestsArray}
+                                    quizData={quizData}
+                                    setQuizData={setQuizData}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                ) : // тест -----------------------------------------------------------------------------
+                !quizData.isQuizCompleted ? (
                     // я пытался сделать вёрстку по БЭМ
                     // но мне начало казаться что это не слишком
                     // правильно, слишком много кода
@@ -216,17 +255,15 @@ export function App() {
                                     // то есть текст, варианты ответа и
                                     // корректный ответ
                                     questionData={
-                                        arrayOfQuestions[
-                                            questionsData.currentQuestionId
+                                        quizData.arrayOfQuestions[
+                                            quizData.currentQuestionId
                                         ]
                                     }
                                     // а вот это информация по всему quiz'у
                                     // (я обосрался с неймнингом)
-                                    setQuizData={setQuestionsData}
-                                    quizData={questionsData}
-                                    checkedAnswerId={
-                                        questionsData.checkedAnswerId
-                                    }
+                                    setQuizData={setQuizData}
+                                    quizData={quizData}
+                                    checkedAnswerId={quizData.checkedAnswerId}
                                 />
                                 <button
                                     className={`
@@ -236,11 +273,12 @@ export function App() {
                                 >
                                     next
                                 </button>
+                                <div>Test: {quizData.choosenTest.title}</div>
                             </div>
                         </div>
                     </div>
                 ) : (
-                    // results part-------------------------------------------------------------------------------
+                    // результат ------------------------------------------------------------------------
                     <div
                         className={`
                         ${s["page__result-block"]}
@@ -259,8 +297,8 @@ export function App() {
                                 `}
                             >
                                 <Result
-                                    arrayOfQuestions={arrayOfQuestions}
-                                    userAnswers={questionsData.userAnswers}
+                                    arrayOfQuestions={quizData.arrayOfQuestions}
+                                    userAnswers={quizData.userAnswers}
                                 />
                             </div>
                         </div>

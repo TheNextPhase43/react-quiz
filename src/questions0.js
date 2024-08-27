@@ -1,3 +1,13 @@
+// импровизированный бэкэнд с базой данных для теста
+
+class Test {
+    constructor(title, testId, questions) {
+        this.title = title;
+        this.testId = testId;
+        this.questions = questions;
+    }
+}
+
 class Question {
     constructor(
         title,
@@ -38,6 +48,7 @@ class Question {
     }
 }
 
+// вопросы для тестов
 const question1 = new Question("Question 1", "1 + 1", ["1", "2", "3"], false, [
     1,
 ]);
@@ -55,10 +66,21 @@ const question4 = new Question("Question 4", "2 + 2", ["3", "5", "4"], false, [
     2,
 ]);
 
-const arrayOfQuestions = [];
-arrayOfQuestions.push(question1, question2, question3, question4);
+// тесты для дальнейшего выбора
+const arrayOfQuestions0 = [];
+const arrayOfQuestions1 = [];
+// одинаковые вопросы, потому что это просто пример
+arrayOfQuestions0.push(question1, question2, question3, question4);
+arrayOfQuestions1.push(question1, question2, question3, question4);
 
-export { arrayOfQuestions };
+const test0 = new Test("Test 0", 0, arrayOfQuestions0);
+const test1 = new Test("Test 1", 1, arrayOfQuestions1);
+
+// массив с тестами на экспорт
+const quizTestsArray = [];
+quizTestsArray.push(test0, test1);
+
+export { quizTestsArray };
 
 // export const arrayOfQuestions = [
 //     {

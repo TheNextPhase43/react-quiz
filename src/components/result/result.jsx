@@ -15,7 +15,11 @@ export function Result({ arrayOfQuestions, userAnswers }) {
                         <ul key={index}>
                             <li>{arrayOfQuestions[index].title}</li>
                             <li>{arrayOfQuestions[index].questionText}</li>
-                            <li>Your answer: {el.userAnswer}</li>
+                            {/* вот эта проверочка через длину внушает доверие конечно))*/}
+                            <li>
+                                Your answer{el.userAnswer.length > 1 ? "s" : ""}
+                                : {el.userAnswer.map((el) => el + " ")}
+                            </li>
                             <li>
                                 {/* изначально я в самом файле questions.js
                                 поставил лишние скобки напротив значения
@@ -23,7 +27,9 @@ export function Result({ arrayOfQuestions, userAnswers }) {
                                 мэпая массив возвращал всегда целый массив,
                                 что стало причиной лишней запятой, пофиксить
                                 которую как, я додумался спустя 40 минут */}
-                                Correct answer: {el.correctAnswer.join(" ")}
+                                Correct answer
+                                {el.correctAnswer.length > 1 ? "s" : ""}:{" "}
+                                {el.correctAnswer.join(" ")}
                             </li>
                             <li>
                                 Your answer is{" "}
