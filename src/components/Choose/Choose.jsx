@@ -15,6 +15,24 @@ export function Choose({ quizTestsArray, quizData, setQuizData }) {
         <div className={s.chooseBlock}>
             <div className={s.chooseTitle}>Choose test</div>
             <div className={s.chooseTests}>
+                {/* проверка для адаптива в css */}
+                {/* <div className={s.test}>
+                    <div>1111111111111</div>
+                    <div>111111111111111</div>
+                </div>
+                <div className={s.test}>
+                    <div>2222222222</div>
+                    <div>22222222</div>
+                </div>
+                <div className={s.test}>
+                    <div>2222222222</div>
+                    <div>22222222</div>
+                </div>
+                <div className={s.test}>
+                    <div>2222222222</div>
+                    <div>22222222</div>
+                </div> */}
+
                 {quizTestsArray.map((el, index) => {
                     return (
                         <div

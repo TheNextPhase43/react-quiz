@@ -265,15 +265,28 @@ export function App() {
                                     quizData={quizData}
                                     checkedAnswerId={quizData.checkedAnswerId}
                                 />
-                                <button
+                                <div
                                     className={`
-                                    ${s["qusetion-window__next-button"]}
+                                    ${s["qusetion-window__interaction-block"]}
+                                    ${s["interaction-block"]}
                                     `}
-                                    onClick={() => handleNextButtonClick()}
                                 >
-                                    next
-                                </button>
-                                <div>Test: {quizData.choosenTest.title}</div>
+                                    <button
+                                        className={`
+                                    ${s["interaction-block__next-button"]}
+                                    `}
+                                        onClick={() => handleNextButtonClick()}
+                                    >
+                                        next
+                                    </button>
+                                    <div
+                                        className={`
+                                    ${s["interaction-block__current-test"]}
+                                    `}
+                                    >
+                                        Test: {quizData.choosenTest.title}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

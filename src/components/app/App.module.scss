@@ -5,7 +5,9 @@
     background-color: rgb(255, 230, 192);
     display: flex;
     flex-direction: column;
-    height: 100%;
+    // и на пк будет минимум до низа страницы,
+    // и на мобилках растянется в случае чего
+    min-height: 100vh;
 
     &__choose-block {
     }
@@ -18,6 +20,11 @@
 ._container {
     max-width: 1200px;
     margin: 0 auto;
+    // чтобы паддинг добавляющий
+    // отсупы по краям на смартфонах
+    // не вылезал за установленную
+    // ширину
+    box-sizing: border-box;
 }
 
 .choose-block {
@@ -31,12 +38,14 @@
     margin-top: 100px;
     @media (max-width: 720px) {
         margin-top: 25px;
+        margin-bottom: 25px;
     }
 
     &__container {
         display: flex;
         justify-content: center;
-        padding: 15px;
+        // это для отступов по краям на смартфонах
+        padding: 0 15px;
     }
 }
 
@@ -50,13 +59,25 @@
 }
 
 .qusetion-window {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
     > *:not(:last-child) {
         margin-bottom: 10px;
     }
+}
+
+.interaction-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
 
     &__next-button {
         border: none;
         padding: 7px 20px;
+        max-width: 100px;
         // margin-top: 20px;
 
         &:hover {
@@ -66,6 +87,9 @@
         &:active {
             background-color: whitesmoke;
         }
+    }
+
+    &__current-test {
     }
 }
 
