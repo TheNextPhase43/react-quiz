@@ -1,4 +1,12 @@
-import { quizTestsArray } from "../../questions0.js";
+// это было нужно когда вопросы были во фронте просто
+// в файлике
+// import { quizTestsArray } from "../../questions0.js";
+
+// это будет нужно когда я налажу стабильную работу,
+// и сделаю requests.js модульным, а пока он в глобальной
+// области видимости (для удобства дебага запросов из консоли)
+// import { quizTestsArray } from "../../../requests.js";
+
 import { Choose } from "../Choose/Choose.jsx";
 import { Question } from "../question/question.jsx";
 import { Result } from "../result/result.jsx";
