@@ -21,12 +21,9 @@ function fetchTests() {
 let quizTestsArray;
 fetchTests();
 
-function postAnswer() {
+function postAnswer(answerToSend) {
     fetch("http://localhost:3003/answers", {
         method: "POST",
-        body: JSON.stringify({
-            id: 0,
-            name: "name0",
-        }),
+        body: JSON.stringify(answerToSend),
     });
 }

@@ -7,16 +7,18 @@ import { createServer } from "http";
 import { quizTestsArray } from "./questions.js";
 
 import * as fs from "node:fs/promises";
+import { constants } from "fs";
 // import fs from 'fs/promises';
 
 // сделать обработку запросов get для получения данных о
 // вопросах для отображения
-
-// сделать обработку запросов get результатов для вывода
-// данных о userAnswers
+// ok
 
 // сделать обработку запросов post для добавления в json
 // объект данных userAnswer
+
+// сделать обработку запросов get результатов для вывода
+// данных о userAnswers
 
 const server = createServer(async (req, res) => {
     // что бы получать точное значение реальных запросов
@@ -60,6 +62,8 @@ const server = createServer(async (req, res) => {
             res.write(JSON.stringify(quizTestsArray));
             res.end();
             break;
+        // ---------------------------------------------------------------------------
+        // сохранение данных об ответе юзера
         case "/answers":
             if (req.method === "POST") {
                 // Там внутри сборка js объекта из body запроса
@@ -75,13 +79,99 @@ const server = createServer(async (req, res) => {
                 // о да, этот дебаг через консоль логи
                 console.log("Incoming data:", recievedData);
 
+                // let currentlySavedAnswers = [];
+
+                // это проверка на существование файла, чтобы если
+                // его нет - создать его, и в дальнейшем записывать
+                // в него ответы (по идее можно и не создавть тут,
+                // он сам создаться потом, уже с данными, но для
+                // понимания сделаю так)
+                try {
+                    await fs.access(
+                        `./answers/answers${recievedData.sessionId}.json`,
+                        constants.F_OK
+                    );
+                    console.log("file exists");
+                } catch {
+                    console.log("file doesn't exist, creating");
+                    // создаём пустой json (важно чтобы был пустой
+                    // вообще то можно проверки потом добавить чтобы
+                    // не выкидывало ошибку если файл не пуст,
+                    // но пока окей)
+                    await fs.writeFile(
+                        `./answers/answers${recievedData.sessionId}.json`,
+                        JSON.stringify(""),
+                        {
+                            encoding: "utf-8",
+                            flag: "w",
+                        }
+                    );
+                }
+                // await fs
+                //     .access(
+                //         `./answers/answers${recievedData.sessionId}.json`,
+                //         constants.F_OK
+                //     )
+                //     .then(() => {
+                //         console.log("file exists");
+                //     })
+                //     .catch(() => {
+                //         console.log("file doesn't exist, creating");
+                //         // создаём пустой json с объектом внутри
+                //         fs.writeFile(
+                //             `./answers/answers${recievedData.sessionId}.json`,
+                //             JSON.stringify({}),
+                //             {
+                //                 encoding: "utf-8",
+                //                 flag: "w",
+                //             }
+                //         );
+                //     });
+
+                // читаем файл
+                let currentlySavedAnswers = await fs.readFile(
+                    `./answers/answers${recievedData.sessionId}.json`
+                );
+
+                // !!!
+                // только если файл не пустой парсим его в объект,
+                // во избежания ошибок
+                if (currentlySavedAnswers.length !== 0) {
+                    currentlySavedAnswers = JSON.parse(currentlySavedAnswers);
+                }
+
+                // опять консоль дебаг
+                // console.log("currentlySavedAnswers:", currentlySavedAnswers);
+
+                // новые данные, полученные соединив
+                // старые + новый объект ответа с фронта
+                let newSavedAnswers = [
+                    // по идее если условие выше не выполнено,
+                    // то мы просто не парсим прочтённые данные
+                    // из json, и я расчитывал что здесь сервер
+                    // выкинет ошибку, но видимо он развёртывает
+                    // <Bufer >, и просто ничего сюда не добавляет
+                    // короче это не крашит систему, но если что
+                    // можно добавить в условие else, чтобы если
+                    // файл при чтении пустой, делать currentlySavedAnswers
+                    // пустым объектом например
+                    ...currentlySavedAnswers,
+                    { ...recievedData.answer },
+                ];
+
+                // console.log("Currently saved answers:", currentlySavedAnswers);
+
+                // console.log(currentlySavedAnswers);
+
+                // const id = recievedData.questionId;
+
                 // перед записью теперь добавить чтение файла, сохранение
                 // в объект, объединение имеющегося объекта, и нового,
                 // который пришёл с фронта. Далее снова преобразовать
                 // в json, и записать
                 await fs.writeFile(
-                    "./answers.json",
-                    JSON.stringify(recievedData),
+                    `./answers/answers${recievedData.sessionId}.json`,
+                    JSON.stringify(newSavedAnswers),
                     {
                         encoding: "utf-8",
                         flag: "w",
