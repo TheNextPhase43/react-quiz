@@ -14,6 +14,8 @@ import { useState, useEffect, useRef } from "react";
 import s from "./App.module.scss";
 
 export function App() {
+    const [quizTestsArrayState, setQuizTestsArrayState] = useState(undefined);
+
     const [quizData, setQuizData] = useState({
         isTestChoosen: false,
         choosenTest: null,
@@ -22,7 +24,56 @@ export function App() {
         isQuizCompleted: false,
         checkedAnswerId: [],
         userAnswers: [],
+        sessionId: undefined,
     });
+
+    // мне пришлось вытащить запрос из файла requests.js,
+    // потому что получилось затруднённое изменение стейта из файла
+    // не являющимся компонентом (не пробросить сеттер через пропсы)
+    // а данный стейт является массивом тестов, которые запрашиваются
+    // с сервера, и мне нужно отобразить окно загрузки, если стейт
+    // в данный момент undefined, однако когда ответ от сервера будет
+    // получен, стейт должен принять значения объекта, и отрендериться
+    // на странице, поэтому собственно и пришлось запрос перетащить в
+    // компонент app.jsx
+    function fetchTests() {
+        fetch("http://localhost:3003/tests", {
+            method: "GET",
+            // вот это вот не работает с флагом "Access-Control-Allow-Origin", "*",
+            // mode: "no-cors",
+        })
+            .then((data) => {
+                return data.json();
+            })
+            .then((jsonData) => {
+                // console.log(jsonData);
+                setQuizTestsArrayState(jsonData);
+            });
+    }
+
+    // +- тоже самое
+    function getNewSessionId() {
+        fetch(`http://localhost:3003/sessions`, {
+            method: "GET",
+        })
+            .then((data) => {
+                return data.json();
+            })
+            .then((jsonData) => {
+                // console.log(jsonData);
+                setQuizData((prev) => {
+                    return {
+                        ...prev,
+                        sessionId: jsonData,
+                    };
+                });
+            });
+    }
+    // чтобы запустилось лишь раз
+    useEffect(() => {
+        fetchTests();
+        getNewSessionId();
+    }, []);
 
     // const [currentQuestionId, setCurrentQuestionId] = useState(0);
     // const [isQuizCompleted, setIsQuizCompleted] = useState(false);
@@ -210,11 +261,33 @@ export function App() {
                 // (возможно в дальнейшем переделаю,
                 // но пока версия с разными файлами мне
                 // нравится больше в виду удобства)
-                sessionId: 0,
+                sessionId: quizData.sessionId,
                 answer: quizData.userAnswers[quizData.userAnswers.length - 1],
             });
         }
     }, [quizData.userAnswers]);
+
+    // тут та же история, я пока не приудмал как лучше
+    // сделать менеджмент запросов, и в итоге он идёт
+    // на сервер, тогда, когда стейт получает значение
+    // true, вот только делать это через useEffect
+    // мне кажется не правильным из за отработки
+    // в самом начале. Однако это всё ещё лучше,
+    // чем вставлять в функцию handleNextButtonClick
+    // то же условие, что стоит тут
+    useEffect(() => {
+        if (quizData.isQuizCompleted) {
+            // тут добавить гибкость выбора сессии
+            fetchResults(0);
+            // тут не выведется ввиду асинхронности,
+            // а её в useEffect оказалось прикрутить
+            // не так просто, реакт ругается на async,
+            // в передаваемой функции в хук, поэтому
+            // пофиг (возможно всё же нужно если)
+            // будет задержка сильная, но может и нет
+            console.log(userAnswers);
+        }
+    }, [quizData.isQuizCompleted]);
 
     return (
         <>
@@ -243,11 +316,16 @@ export function App() {
                                 ${s["choose-block__window"]}
                                 `}
                             >
-                                <Choose
-                                    quizTestsArray={quizTestsArray}
-                                    quizData={quizData}
-                                    setQuizData={setQuizData}
-                                />
+                                {/* если данные не загрузились будет загрузка */}
+                                {quizTestsArrayState == undefined ? (
+                                    <div>loading...</div>
+                                ) : (
+                                    <Choose
+                                        quizTestsArray={quizTestsArrayState}
+                                        quizData={quizData}
+                                        setQuizData={setQuizData}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>

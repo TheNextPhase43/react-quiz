@@ -4,7 +4,7 @@
 // const http = require("http");
 
 import { createServer } from "http";
-import { quizTestsArray } from "./questions.js";
+import { quizTestsArray } from "./tests.js";
 
 import * as fs from "node:fs/promises";
 import { constants } from "fs";
@@ -16,6 +16,7 @@ import { constants } from "fs";
 
 // сделать обработку запросов post для добавления в json
 // объект данных userAnswer
+// ok
 
 // сделать обработку запросов get результатов для вывода
 // данных о userAnswers
@@ -27,7 +28,7 @@ const server = createServer(async (req, res) => {
     //     requestCounter++;
     // }
 
-    // console.log(req.headers);
+    console.log(req.url);
 
     function parseDataFromServer(request) {
         // тело пост запроса
@@ -54,14 +55,75 @@ const server = createServer(async (req, res) => {
 
     switch (req.url) {
         // так, это у нас ответ на запрос вопросов
-        case "/questions":
+        case "/sessions":
+            res.setHeader("Content-Type", "application/json");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            // этот блок здесь только для проверки на наличие
+            // самого файла
+            try {
+                await fs.access(`./sessions.json`, constants.F_OK);
+            } catch {
+                await fs.writeFile(`./sessions.json`, "", {
+                    encoding: "utf-8",
+                    flag: "w",
+                });
+            }
+            const sessionIdBuffer = await fs.readFile("./sessions.json");
+            let sessionIdArray = [];
+
+            // короче по итогу у нас будет либо массив с одним нулём,
+            // либо массив, прочитанный из файла sessions.json
+            if (sessionIdBuffer.length !== 0) {
+                sessionIdArray = JSON.parse(sessionIdBuffer);
+            }
+
+            const newSessionId =
+                sessionIdArray.length === 0
+                    ? 0
+                    : sessionIdArray[sessionIdArray.length - 1] + 1;
+
+            sessionIdArray.push(newSessionId);
+
+            console.log(sessionIdArray);
+
+            // из за строгого режима реакт dev,
+            // при загрузке страницы компонент
+            // отрисовывался дважды, и посылал
+            // запрос за сессией тоже дважды
+            // отключение строгого режма помогло,
+            // но вероятно, это не слишком верно
+            await fs.writeFile(
+                `./sessions.json`,
+                JSON.stringify(sessionIdArray),
+                {
+                    encoding: "utf-8",
+                    flag: "w",
+                }
+            );
+
+            res.write(JSON.stringify(newSessionId));
+            res.end();
+            break;
+
+        case "/tests":
             res.setHeader("Content-Type", "application/json");
             // конкретно это нужно пока я не понял для чего именно,
             // но без него json не проходит
             res.setHeader("Access-Control-Allow-Origin", "*");
-            res.write(JSON.stringify(quizTestsArray));
+
+            await new Promise((resolve, reject) => {
+                // это тест задержки на сервере
+                setTimeout(() => {
+                    res.write(JSON.stringify(quizTestsArray));
+                    // console.log("Response write");
+                    resolve();
+                }, 0);
+            });
+
+            // console.log("Response end");
             res.end();
             break;
+
         // ---------------------------------------------------------------------------
         // сохранение данных об ответе юзера
         case "/answers":
@@ -77,7 +139,7 @@ const server = createServer(async (req, res) => {
                 // а они весьма удобные
                 let recievedData = await parseDataFromServer(req);
                 // о да, этот дебаг через консоль логи
-                console.log("Incoming data:", recievedData);
+                // console.log("Incoming data:", recievedData);
 
                 // let currentlySavedAnswers = [];
 
@@ -93,14 +155,14 @@ const server = createServer(async (req, res) => {
                     );
                     console.log("file exists");
                 } catch {
-                    console.log("file doesn't exist, creating");
+                    // console.log("file doesn't exist, creating");
                     // создаём пустой json (важно чтобы был пустой
                     // вообще то можно проверки потом добавить чтобы
                     // не выкидывало ошибку если файл не пуст,
                     // но пока окей)
                     await fs.writeFile(
                         `./answers/answers${recievedData.sessionId}.json`,
-                        JSON.stringify(""),
+                        JSON.stringify({}),
                         {
                             encoding: "utf-8",
                             flag: "w",
@@ -132,6 +194,7 @@ const server = createServer(async (req, res) => {
                 let currentlySavedAnswers = await fs.readFile(
                     `./answers/answers${recievedData.sessionId}.json`
                 );
+                // console.log("just after read: ", currentlySavedAnswers.savedAnswers);
 
                 // !!!
                 // только если файл не пустой парсим его в объект,
@@ -139,9 +202,19 @@ const server = createServer(async (req, res) => {
                 if (currentlySavedAnswers.length !== 0) {
                     currentlySavedAnswers = JSON.parse(currentlySavedAnswers);
                 }
+                // ужасающий костыль, нужен во избежания ошибок если файл
+                // был пустым, или вовсе не существовал, в дальнейшем
+                // это свойство должно и так появится, но при его развороте
+                // выдаёт ошибку отсутствия возможности итерабельности
+                // короче предусмотрено что свойство должно быть, но его
+                // нет, поэтому костылём подпираем, чтобы было
+                if (currentlySavedAnswers.savedAnswers == undefined) {
+                    currentlySavedAnswers.savedAnswers = [];
+                }
 
                 // опять консоль дебаг
                 // console.log("currentlySavedAnswers:", currentlySavedAnswers);
+                // console.log("after modifying: ",currentlySavedAnswers.savedAnswers);
 
                 // новые данные, полученные соединив
                 // старые + новый объект ответа с фронта
@@ -155,7 +228,7 @@ const server = createServer(async (req, res) => {
                     // можно добавить в условие else, чтобы если
                     // файл при чтении пустой, делать currentlySavedAnswers
                     // пустым объектом например
-                    ...currentlySavedAnswers,
+                    ...currentlySavedAnswers.savedAnswers,
                     { ...recievedData.answer },
                 ];
 
@@ -171,7 +244,10 @@ const server = createServer(async (req, res) => {
                 // в json, и записать
                 await fs.writeFile(
                     `./answers/answers${recievedData.sessionId}.json`,
-                    JSON.stringify(newSavedAnswers),
+                    JSON.stringify({
+                        sessionId: recievedData.sessionId,
+                        savedAnswers: newSavedAnswers,
+                    }),
                     {
                         encoding: "utf-8",
                         flag: "w",
@@ -185,7 +261,26 @@ const server = createServer(async (req, res) => {
             res.setHeader("Access-Control-Allow-Origin", "*");
             res.end();
             break;
+        // запрос на результаты тестов
+        // возможно сделать разветвление, чтобы выдавать !!!
+        // json по разным http запросам, в зависимости от
+        // айди сессии в самом http запросе передавать
+        // данные json'а из соответствующего файла на сервере
+        // жёстко загрёб всё универсальной проверкой через
+        // регулярное выражение
+        case `/results/answers${req.url.match(/\d/g)}`:
+            // console.log("what you know");
+
+            res.setHeader("Content-Type", "application/json");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            // -----------------------------------------------
+            // доделать ответ на гет запрос на ответы из бд
+            res.write(JSON.stringify({ skibidi: "skibidi" }));
+            res.end();
+            break;
         default:
+            console.log("Default case triggered!");
+
             res.write("Not found");
             res.end();
     }
