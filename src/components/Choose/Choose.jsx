@@ -1,6 +1,6 @@
 import s from "./Choose.module.scss";
 
-export function Choose({ quizTestsArray, quizData, setQuizData }) {
+export function Choose({ quizTestsArray, quizData, setQuizData, getNewSessionId }) {
     function testHandleClick(test) {
         setQuizData((prev) => {
             return {
@@ -39,6 +39,7 @@ export function Choose({ quizTestsArray, quizData, setQuizData }) {
                             className={s.test}
                             onClick={() => {
                                 testHandleClick(el);
+                                getNewSessionId();
                             }}
                             key={index}
                         >

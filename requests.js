@@ -17,7 +17,7 @@
 
 // запрос на получение результатов,
 // которые хранятся в json в папаке answers
-function fetchResults(sessionId) {
+function fetchResultsAnswers(sessionId) {
     fetch(`http://localhost:3003/results/answers${sessionId}`, {
         method: "GET",
         // вот это вот не работает с флагом "Access-Control-Allow-Origin", "*",
@@ -29,6 +29,19 @@ function fetchResults(sessionId) {
         .then((jsonData) => {
             // console.log(jsonData);
             userAnswers = jsonData;
+        });
+}
+
+function fetchResults(pageNumber) {
+    fetch(`http://localhost:3003/answerspage${pageNumber}`, {
+        method: "GET",
+    })
+        .then((data) => {
+            return data.json();
+        })
+        .then((jsonData) => {
+            // console.log(jsonData);
+            console.log(jsonData);
         });
 }
 

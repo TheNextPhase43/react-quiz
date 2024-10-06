@@ -10,6 +10,7 @@
 import { Choose } from "../Choose/Choose.jsx";
 import { Question } from "../question/question.jsx";
 import { Result } from "../result/result.jsx";
+import { Results } from "../results/results.jsx";
 import { useState, useEffect, useRef } from "react";
 import s from "./App.module.scss";
 
@@ -18,6 +19,7 @@ export function App() {
 
     const [quizData, setQuizData] = useState({
         isTestChoosen: false,
+        isResultsBlockStateActive: false,
         choosenTest: null,
         arrayOfQuestions: null,
         currentQuestionId: 0,
@@ -72,7 +74,7 @@ export function App() {
     // чтобы запустилось лишь раз
     useEffect(() => {
         fetchTests();
-        getNewSessionId();
+        // getNewSessionId();
     }, []);
 
     // const [currentQuestionId, setCurrentQuestionId] = useState(0);
@@ -275,19 +277,19 @@ export function App() {
     // в самом начале. Однако это всё ещё лучше,
     // чем вставлять в функцию handleNextButtonClick
     // то же условие, что стоит тут
-    useEffect(() => {
-        if (quizData.isQuizCompleted) {
-            // тут добавить гибкость выбора сессии
-            fetchResults(0);
-            // тут не выведется ввиду асинхронности,
-            // а её в useEffect оказалось прикрутить
-            // не так просто, реакт ругается на async,
-            // в передаваемой функции в хук, поэтому
-            // пофиг (возможно всё же нужно если)
-            // будет задержка сильная, но может и нет
-            console.log(userAnswers);
-        }
-    }, [quizData.isQuizCompleted]);
+    // useEffect(() => {
+    //     if (quizData.isQuizCompleted) {
+    //         // тут добавить гибкость выбора сессии
+    //         // fetchResults(0);
+    //         // тут не выведется ввиду асинхронности,
+    //         // а её в useEffect оказалось прикрутить
+    //         // не так просто, реакт ругается на async,
+    //         // в передаваемой функции в хук, поэтому
+    //         // пофиг (возможно всё же нужно если)
+    //         // будет задержка сильная, но может и нет
+    //         console.log(userAnswers);
+    //     }
+    // }, [quizData.isQuizCompleted]);
 
     return (
         <>
@@ -298,34 +300,116 @@ export function App() {
                 но в принципе, одинарная вложенность пока не образовала
                 тернарный ад, так что пусть будет */}
                 {/* выбор теста ----------------------------------------------------------------------*/}
+                {/* если не выбран */}
                 {!quizData.isTestChoosen ? (
+                    // есть идея, что это всё тоже можно закинуть
+                    // компонент выбора
                     <div
                         className={`
-                            ${s["page__choose-block"]} 
-                            ${s["choose-block"]}
+                            ${s["page__menu-block"]} 
+                            ${s["menu-block"]}
                             `}
                     >
                         <div
                             className={`
-                                ${s["choose-block__container"]} 
+                                ${s["menu-block__container"]} 
                                 ${s["_container"]}
                                 `}
                         >
                             <div
                                 className={`
-                                ${s["choose-block__window"]}
+                                ${s["menu-block__window"]}
                                 `}
                             >
-                                {/* если данные не загрузились будет загрузка */}
-                                {quizTestsArrayState == undefined ? (
-                                    <div>loading...</div>
-                                ) : (
-                                    <Choose
-                                        quizTestsArray={quizTestsArrayState}
-                                        quizData={quizData}
-                                        setQuizData={setQuizData}
-                                    />
-                                )}
+                                {/*
+
+                                это было не просто смело, это было
+                                пиздец как смело
+                                - Т
+
+                                я таки начал путаться в тернарных операторах
+                                ? :
+                                и решил закинуть условие в обычный if/else,
+                                для большей читаемости. Писать отдельную
+                                функцию и вызывать её тут я не захотел, но
+                                спасибо комменататору на хабре, который
+                                подкинул идею, как вызвать функцию с условием
+                                прямо внутри JSX. На мой взгляд это выглядит
+                                как то совсем неправильно, но что уж, раз
+                                работает, то почему бы и нет!
+
+                                */}
+                                {(function () {
+                                    // если не активен блок, где можно
+                                    // смотреть результаты тестов
+                                    // то будет сначала загрузка, а потом
+                                    // предложение выбора теста для прохождения
+                                    if (!quizData.isResultsBlockStateActive) {
+                                        return (
+                                            <>
+                                                {quizTestsArrayState ==
+                                                undefined ? (
+                                                    <div>loading...</div>
+                                                ) : (
+                                                    <Choose
+                                                        quizTestsArray={
+                                                            quizTestsArrayState
+                                                        }
+                                                        quizData={quizData}
+                                                        setQuizData={
+                                                            setQuizData
+                                                        }
+                                                        getNewSessionId={
+                                                            getNewSessionId
+                                                        }
+                                                    />
+                                                )}
+                                            </>
+                                        );
+                                    }
+                                    // иначе будет собственно компонент,
+                                    // где можно выбрать уже, в свою очередь
+                                    // какой результат посмотреть
+                                    else {
+                                        return (
+                                            <>
+                                                <Results />
+                                            </>
+                                        );
+                                    }
+                                })()}
+
+                                <div
+                                    className={`
+                                ${s["menu-block__results-block"]}
+                                ${s["results-block"]}
+                                `}
+                                >
+                                    <button
+                                        onClick={() => {
+                                            if (
+                                                !quizData.isResultsBlockStateActive
+                                            ) {
+                                                // аругмент это номер страницы
+                                                // в теории должен быть
+                                                fetchResults(1);
+                                            }
+                                            setQuizData((prev) => {
+                                                return {
+                                                    ...prev,
+                                                    isResultsBlockStateActive:
+                                                        !prev.isResultsBlockStateActive,
+                                                };
+                                            });
+                                        }}
+                                    >
+                                        {quizData.isResultsBlockStateActive ? (
+                                            <>Back to menu</>
+                                        ) : (
+                                            <>Check out the results</>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

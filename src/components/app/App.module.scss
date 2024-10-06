@@ -9,7 +9,7 @@
     // и на мобилках растянется в случае чего
     min-height: 100vh;
 
-    &__choose-block {
+    &__menu-block {
     }
     &__question-block {
     }
@@ -27,12 +27,12 @@
     box-sizing: border-box;
 }
 
-.choose-block {
+.menu-block {
     &__container {
     }
 }
 
-.choose-block,
+.menu-block,
 .question-block,
 .result-block {
     margin-top: 100px;
@@ -93,7 +93,7 @@
     }
 }
 
-.choose-block__window,
+.menu-block__window,
 .question-block__question-window,
 .result-block__window {
     background-color: rgb(255, 255, 255);

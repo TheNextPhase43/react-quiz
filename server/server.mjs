@@ -127,140 +127,220 @@ const server = createServer(async (req, res) => {
         // ---------------------------------------------------------------------------
         // сохранение данных об ответе юзера
         case "/answers":
-            if (req.method === "POST") {
-                // Там внутри сборка js объекта из body запроса
-                // с фронта, так что вынос в отдельную функцию
-                // потребовал немного асинхронности (возможно
-                // делать этого и не стоило, или можно было
-                // как то этого избежать... возможно...)
-                // а ещё может и не стоило делать всю функцию async,
-                // а накрутить тут всё черещ промисы и then'ы, но я
-                // пока не нашёл причин избегать await'ов тут,
-                // а они весьма удобные
-                let recievedData = await parseDataFromServer(req);
-                // о да, этот дебаг через консоль логи
-                // console.log("Incoming data:", recievedData);
+            // Там внутри сборка js объекта из body запроса
+            // с фронта, так что вынос в отдельную функцию
+            // потребовал немного асинхронности (возможно
+            // делать этого и не стоило, или можно было
+            // как то этого избежать... возможно...)
+            // а ещё может и не стоило делать всю функцию async,
+            // а накрутить тут всё черещ промисы и then'ы, но я
+            // пока не нашёл причин избегать await'ов тут,
+            // а они весьма удобные
+            let recievedData = await parseDataFromServer(req);
+            // о да, этот дебаг через консоль логи
+            // console.log("Incoming data:", recievedData);
 
-                // let currentlySavedAnswers = [];
+            // let currentlySavedAnswers = [];
 
-                // это проверка на существование файла, чтобы если
-                // его нет - создать его, и в дальнейшем записывать
-                // в него ответы (по идее можно и не создавть тут,
-                // он сам создаться потом, уже с данными, но для
-                // понимания сделаю так)
-                try {
-                    await fs.access(
-                        `./answers/answers${recievedData.sessionId}.json`,
-                        constants.F_OK
-                    );
-                    console.log("file exists");
-                } catch {
-                    // console.log("file doesn't exist, creating");
-                    // создаём пустой json (важно чтобы был пустой
-                    // вообще то можно проверки потом добавить чтобы
-                    // не выкидывало ошибку если файл не пуст,
-                    // но пока окей)
-                    await fs.writeFile(
-                        `./answers/answers${recievedData.sessionId}.json`,
-                        JSON.stringify({}),
-                        {
-                            encoding: "utf-8",
-                            flag: "w",
-                        }
-                    );
-                }
-                // await fs
-                //     .access(
-                //         `./answers/answers${recievedData.sessionId}.json`,
-                //         constants.F_OK
-                //     )
-                //     .then(() => {
-                //         console.log("file exists");
-                //     })
-                //     .catch(() => {
-                //         console.log("file doesn't exist, creating");
-                //         // создаём пустой json с объектом внутри
-                //         fs.writeFile(
-                //             `./answers/answers${recievedData.sessionId}.json`,
-                //             JSON.stringify({}),
-                //             {
-                //                 encoding: "utf-8",
-                //                 flag: "w",
-                //             }
-                //         );
-                //     });
-
-                // читаем файл
-                let currentlySavedAnswers = await fs.readFile(
-                    `./answers/answers${recievedData.sessionId}.json`
+            // это проверка на существование файла, чтобы если
+            // его нет - создать его, и в дальнейшем записывать
+            // в него ответы (по идее можно и не создавть тут,
+            // он сам создаться потом, уже с данными, но для
+            // понимания сделаю так)
+            try {
+                await fs.access(
+                    `./answers/answers${recievedData.sessionId}.json`,
+                    constants.F_OK
                 );
-                // console.log("just after read: ", currentlySavedAnswers.savedAnswers);
-
-                // !!!
-                // только если файл не пустой парсим его в объект,
-                // во избежания ошибок
-                if (currentlySavedAnswers.length !== 0) {
-                    currentlySavedAnswers = JSON.parse(currentlySavedAnswers);
-                }
-                // ужасающий костыль, нужен во избежания ошибок если файл
-                // был пустым, или вовсе не существовал, в дальнейшем
-                // это свойство должно и так появится, но при его развороте
-                // выдаёт ошибку отсутствия возможности итерабельности
-                // короче предусмотрено что свойство должно быть, но его
-                // нет, поэтому костылём подпираем, чтобы было
-                if (currentlySavedAnswers.savedAnswers == undefined) {
-                    currentlySavedAnswers.savedAnswers = [];
-                }
-
-                // опять консоль дебаг
-                // console.log("currentlySavedAnswers:", currentlySavedAnswers);
-                // console.log("after modifying: ",currentlySavedAnswers.savedAnswers);
-
-                // новые данные, полученные соединив
-                // старые + новый объект ответа с фронта
-                let newSavedAnswers = [
-                    // по идее если условие выше не выполнено,
-                    // то мы просто не парсим прочтённые данные
-                    // из json, и я расчитывал что здесь сервер
-                    // выкинет ошибку, но видимо он развёртывает
-                    // <Bufer >, и просто ничего сюда не добавляет
-                    // короче это не крашит систему, но если что
-                    // можно добавить в условие else, чтобы если
-                    // файл при чтении пустой, делать currentlySavedAnswers
-                    // пустым объектом например
-                    ...currentlySavedAnswers.savedAnswers,
-                    { ...recievedData.answer },
-                ];
-
-                // console.log("Currently saved answers:", currentlySavedAnswers);
-
-                // console.log(currentlySavedAnswers);
-
-                // const id = recievedData.questionId;
-
-                // перед записью теперь добавить чтение файла, сохранение
-                // в объект, объединение имеющегося объекта, и нового,
-                // который пришёл с фронта. Далее снова преобразовать
-                // в json, и записать
+                console.log("file exists");
+            } catch {
+                // console.log("file doesn't exist, creating");
+                // создаём пустой json (важно чтобы был пустой
+                // вообще то можно проверки потом добавить чтобы
+                // не выкидывало ошибку если файл не пуст,
+                // но пока окей)
                 await fs.writeFile(
                     `./answers/answers${recievedData.sessionId}.json`,
-                    JSON.stringify({
-                        sessionId: recievedData.sessionId,
-                        savedAnswers: newSavedAnswers,
-                    }),
+                    JSON.stringify({}),
                     {
                         encoding: "utf-8",
                         flag: "w",
                     }
                 );
             }
-            // вот это вот тут возможно и не нужно,
-            // но я написал res.end() (хз нужен ли вообще res.end
-            // в пост запросе) и оно начало выкидывать ошибку что
-            // и в гет запросе ругаясь на политику безопасности
+            // await fs
+            //     .access(
+            //         `./answers/answers${recievedData.sessionId}.json`,
+            //         constants.F_OK
+            //     )
+            //     .then(() => {
+            //         console.log("file exists");
+            //     })
+            //     .catch(() => {
+            //         console.log("file doesn't exist, creating");
+            //         // создаём пустой json с объектом внутри
+            //         fs.writeFile(
+            //             `./answers/answers${recievedData.sessionId}.json`,
+            //             JSON.stringify({}),
+            //             {
+            //                 encoding: "utf-8",
+            //                 flag: "w",
+            //             }
+            //         );
+            //     });
+
+            // читаем файл
+            let currentlySavedAnswers = await fs.readFile(
+                `./answers/answers${recievedData.sessionId}.json`
+            );
+            // console.log("just after read: ", currentlySavedAnswers.savedAnswers);
+
+            // !!!
+            // только если файл не пустой парсим его в объект,
+            // во избежания ошибок
+            if (currentlySavedAnswers.length !== 0) {
+                currentlySavedAnswers = JSON.parse(currentlySavedAnswers);
+            }
+            // ужасающий костыль, нужен во избежания ошибок если файл
+            // был пустым, или вовсе не существовал, в дальнейшем
+            // это свойство должно и так появится, но при его развороте
+            // выдаёт ошибку отсутствия возможности итерабельности
+            // короче предусмотрено что свойство должно быть, но его
+            // нет, поэтому костылём подпираем, чтобы было
+            if (currentlySavedAnswers.savedAnswers == undefined) {
+                currentlySavedAnswers.savedAnswers = [];
+            }
+
+            // опять консоль дебаг
+            // console.log("currentlySavedAnswers:", currentlySavedAnswers);
+            // console.log("after modifying: ",currentlySavedAnswers.savedAnswers);
+
+            // новые данные, полученные соединив
+            // старые + новый объект ответа с фронта
+            let newSavedAnswers = [
+                // по идее если условие выше не выполнено,
+                // то мы просто не парсим прочтённые данные
+                // из json, и я расчитывал что здесь сервер
+                // выкинет ошибку, но видимо он развёртывает
+                // <Bufer >, и просто ничего сюда не добавляет
+                // короче это не крашит систему, но если что
+                // можно добавить в условие else, чтобы если
+                // файл при чтении пустой, делать currentlySavedAnswers
+                // пустым объектом например
+                ...currentlySavedAnswers.savedAnswers,
+                { ...recievedData.answer },
+            ];
+
+            // console.log("Currently saved answers:", currentlySavedAnswers);
+
+            // console.log(currentlySavedAnswers);
+
+            // const id = recievedData.questionId;
+
+            // перед записью теперь добавить чтение файла, сохранение
+            // в объект, объединение имеющегося объекта, и нового,
+            // который пришёл с фронта. Далее снова преобразовать
+            // в json, и записать
+            await fs.writeFile(
+                `./answers/answers${recievedData.sessionId}.json`,
+                JSON.stringify({
+                    sessionId: recievedData.sessionId,
+                    savedAnswers: newSavedAnswers,
+                }),
+                {
+                    encoding: "utf-8",
+                    flag: "w",
+                }
+            );
             res.setHeader("Access-Control-Allow-Origin", "*");
             res.end();
             break;
+
+        case `/answerspage${req.url.match(/\d/g)}`:
+            const pageId = parseInt(req.url.match(/\d/g));
+            const countOfPagesToSend = pageId * 5;
+
+            // эти две грёбаные версии файл системы
+            // у ноды (промисы/не промисы) меня с ума сведут
+
+
+
+            // сделать выборку только пяти страниц
+            async function readFilesInDirectory(dirName) {
+                try {
+                    let fileNames = await fs.readdir(dirName);
+
+                    // адовая сортировочка
+                    fileNames.sort((a, b) => {
+                        // console.log(a, b);
+                        return (
+                            parseInt(a.match(/\d/g).join("")) -
+                            parseInt(b.match(/\d/g).join(""))
+                        );
+                    });
+
+                    const filesPromises = fileNames.map((fileName) => {
+                        return fs.readFile(dirName + fileName, "utf-8");
+                    });
+
+                    // вот на этом этапе это массив json'ов (почти)
+                    let files = await Promise.all(filesPromises);
+                    // console.log(files);
+                    // да, eval может показаться тут лишним, но JSON.parse
+                    // не работает в данном случае из за лишних ковычек там и сям
+                    // так как это мой первый проект с бекэндом, я ещё плохо умею
+                    // манипулировать файлами через ноду. Я думаю что для моей задачи
+                    // (прочитать определённое колво файлов и переслать на фронт,
+                    // есть гораздо лучшее решение, чем вот это вот через костыли)
+                    // в дальнейшем я узнаю как сделать лучше
+                    files = files.map((el) => {return eval('({obj:[' + el + ']})');})
+                    return files;
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            // console.log("filenames1: ", fileNames);
+
+            // console.log("filenames2: ", fileNames);
+
+            // const filesArray = [];
+
+            // try {
+            //     fileNames.forEach(async (el, i) => {
+            //         // console.log("countOfPagesToSend: ", countOfPagesToSend);
+            //         // console.log("i: ", i);
+
+            //         // как вытащить айди сессии из названия
+            //         // console.log(parseInt(el.match(/\d/g).join("")));
+            //         if (i >= countOfPagesToSend) {
+            //             return;
+            //         }
+            //         const file = await fs.readFile(`./answers/${el}`);
+            //         filesArray.push(JSON.parse(file));
+            //     });
+            // } catch (error) {}
+
+            // console.log(filesArray);
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // доделать пересыл на фронт пяти (относительно
+            // pageId) первых и последующих файлов answers
+            // чтение-json-отправка
+            const filesToSend = await readFilesInDirectory("./answers/");
+            console.log(filesToSend);
+
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            // почему то во вкладке нетворка это не считается
+            // JSON'ом, хотя тут отчётливо видно что это он
+            // хоть файл и доходит до фронта, и работает там
+            res.write(JSON.stringify(filesToSend));
+            res.end();
+            break;
+        // вот это вот тут возможно и не нужно,
+        // но я написал res.end() (хз нужен ли вообще res.end
+        // в пост запросе) и оно начало выкидывать ошибку что
+        // и в гет запросе ругаясь на политику безопасности
+
         // запрос на результаты тестов
         // возможно сделать разветвление, чтобы выдавать !!!
         // json по разным http запросам, в зависимости от
