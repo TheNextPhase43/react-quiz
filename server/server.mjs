@@ -137,6 +137,8 @@ const server = createServer(async (req, res) => {
             // пока не нашёл причин избегать await'ов тут,
             // а они весьма удобные
             let recievedData = await parseDataFromServer(req);
+            console.log("recievedData", recievedData);
+            
             // о да, этот дебаг через консоль логи
             // console.log("Incoming data:", recievedData);
 
@@ -246,6 +248,7 @@ const server = createServer(async (req, res) => {
                 JSON.stringify({
                     sessionId: recievedData.sessionId,
                     savedAnswers: newSavedAnswers,
+                    countOfQuestionsInTest: recievedData.countOfQuestionsInTest,
                 }),
                 {
                     encoding: "utf-8",
@@ -258,15 +261,16 @@ const server = createServer(async (req, res) => {
 
         case `/answerspage${req.url.match(/\d/g)}`:
             const pageId = parseInt(req.url.match(/\d/g));
-            const countOfPagesToSend = pageId * 5;
+            const countOfElementsToSend = pageId * 5;
 
             // эти две грёбаные версии файл системы
             // у ноды (промисы/не промисы) меня с ума сведут
 
-
-
-            // сделать выборку только пяти страниц
-            async function readFilesInDirectory(dirName) {
+            async function readFilesInDirectory(
+                dirName,
+                isPage = false,
+                countOfElementsToRead = 5
+            ) {
                 try {
                     let fileNames = await fs.readdir(dirName);
 
@@ -278,6 +282,21 @@ const server = createServer(async (req, res) => {
                             parseInt(b.match(/\d/g).join(""))
                         );
                     });
+
+                    // если идёт запрос на страницу, то
+                    // сортируем только пять элементов,
+                    // (по порядку пять, или пять последние)
+                    if (isPage) {
+                        fileNames = fileNames.slice(
+                            countOfElementsToRead - 5,
+                            // слайс работает так, что нужно
+                            // указать именно 5
+                            // первый аргумент слайса это начало
+                            // а второй, это тот который будет
+                            // ограничивать, но сам не будет выбран
+                            countOfElementsToRead
+                        );
+                    }
 
                     const filesPromises = fileNames.map((fileName) => {
                         return fs.readFile(dirName + fileName, "utf-8");
@@ -293,41 +312,22 @@ const server = createServer(async (req, res) => {
                     // (прочитать определённое колво файлов и переслать на фронт,
                     // есть гораздо лучшее решение, чем вот это вот через костыли)
                     // в дальнейшем я узнаю как сделать лучше
-                    files = files.map((el) => {return eval('({obj:[' + el + ']})');})
+                    files = files.map((el) => {
+                        return eval("({obj:[" + el + "]})");
+                    });
                     return files;
                 } catch (err) {
                     console.error(err);
                 }
             }
-
-            // console.log("filenames1: ", fileNames);
-
-            // console.log("filenames2: ", fileNames);
-
-            // const filesArray = [];
-
-            // try {
-            //     fileNames.forEach(async (el, i) => {
-            //         // console.log("countOfPagesToSend: ", countOfPagesToSend);
-            //         // console.log("i: ", i);
-
-            //         // как вытащить айди сессии из названия
-            //         // console.log(parseInt(el.match(/\d/g).join("")));
-            //         if (i >= countOfPagesToSend) {
-            //             return;
-            //         }
-            //         const file = await fs.readFile(`./answers/${el}`);
-            //         filesArray.push(JSON.parse(file));
-            //     });
-            // } catch (error) {}
-
             // console.log(filesArray);
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // доделать пересыл на фронт пяти (относительно
-            // pageId) первых и последующих файлов answers
             // чтение-json-отправка
-            const filesToSend = await readFilesInDirectory("./answers/");
-            console.log(filesToSend);
+            const filesToSend = await readFilesInDirectory(
+                "./answers/",
+                true,
+                countOfElementsToSend
+            );
+            // console.log(filesToSend);
 
             res.setHeader("Access-Control-Allow-Origin", "*");
             // почему то во вкладке нетворка это не считается

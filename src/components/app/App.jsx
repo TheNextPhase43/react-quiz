@@ -15,8 +15,23 @@ import { useState, useEffect, useRef } from "react";
 import s from "./App.module.scss";
 
 export function App() {
-    const [quizTestsArrayState, setQuizTestsArrayState] = useState(undefined);
+    // const [quizTestsArrayState, setQuizTestsArrayState] = useState(undefined);
 
+    // я сделал разделение для стейтов
+    // так как первый тип для данных относительно
+    // всего приложения, и доступа к работе самого теста
+    const [quizWindowsState, setQuizWindowsState] = useState({
+        quizTestsArray: undefined,
+        resultsWindowState: false,
+    });
+
+    const [resultsState, setResultsState] = useState({
+        savedAnswersPageFromDB: undefined,
+        pageId: 1,
+    });
+
+    // а второй уже для конкретных данных внутри
+    // теста
     const [quizData, setQuizData] = useState({
         isTestChoosen: false,
         isResultsBlockStateActive: false,
@@ -49,7 +64,12 @@ export function App() {
             })
             .then((jsonData) => {
                 // console.log(jsonData);
-                setQuizTestsArrayState(jsonData);
+                setQuizWindowsState((prev) => {
+                    return {
+                        ...prev,
+                        quizTestsArray: jsonData,
+                    };
+                });
             });
     }
 
@@ -71,11 +91,84 @@ export function App() {
                 });
             });
     }
+
+    function fetchResults(pageNumber) {
+        fetch(`http://localhost:3003/answerspage${pageNumber}`, {
+            method: "GET",
+        })
+            .then((data) => {
+                return data.json();
+            })
+            .then((jsonData) => {
+                // console.log(jsonData);
+                console.log(jsonData);
+
+                setResultsState((prev) => {
+                    return {
+                        ...prev,
+                        savedAnswersPageFromDB: jsonData,
+                    };
+                });
+            });
+    }
+
     // чтобы запустилось лишь раз
     useEffect(() => {
         fetchTests();
         // getNewSessionId();
     }, []);
+
+    // реализация загрузки страницы результатов
+    useEffect(() => {
+        // изначально savedAnswersPageFromDB === undefined
+        // когда приходят данные с бека, переменная больше
+        // не undefined, и условие срабатывает собственно
+        // меняется стейт, и теперь вместо загрузки
+        // отображаются данные с бека в компоненте
+        if (resultsState.savedAnswersPageFromDB !== undefined) {
+            setQuizWindowsState((prev) => {
+                return {
+                    ...prev,
+                    resultsWindowState: true,
+                };
+            });
+        }
+    }, [resultsState.savedAnswersPageFromDB]);
+
+    // я вообще то не уверен что стоит делать
+    // обновление данных на сервере через useEffect,
+    // но пока что вполне работает, и не вижу причин
+    // этого не делать.
+    // Собственно тут у нас при обновлении ответов
+    // юзера, последний данный ответ отправляется на
+    // сервер для записи в json файл
+    useEffect(() => {
+        // миунс найден, при объявлении стейта
+        // он также отрабатывает, поэтому
+        // тут теперь костыль с условием
+        if (quizData.userAnswers.length === 0) {
+            // console.log(0);
+        } else {
+            // console.log(1);
+            postAnswer({
+                // вот это должен быть айдишник "сессии"
+                // чтобы дальше отличать результаты
+                // для каждой сессии в БД создаётся
+                // уникальный json файл, в котором далее
+                // и хранятся данные об ответах юзера
+                // во время конкретной сессии
+                // вообще то можно наверное записать всё
+                // в один json файл, но я решил сделать
+                // разделение и пока не вижу минусов
+                // (возможно в дальнейшем переделаю,
+                // но пока версия с разными файлами мне
+                // нравится больше в виду удобства)
+                sessionId: quizData.sessionId,
+                answer: quizData.userAnswers[quizData.userAnswers.length - 1],
+                countOfQuestionsInTest: quizData.choosenTest.questions.length,
+            });
+        }
+    }, [quizData.userAnswers]);
 
     // const [currentQuestionId, setCurrentQuestionId] = useState(0);
     // const [isQuizCompleted, setIsQuizCompleted] = useState(false);
@@ -235,40 +328,6 @@ export function App() {
         }
     }
 
-    // я вообще то не уверен что стоит делать
-    // обновление данных на сервере через useEffect,
-    // но пока что вполне работает, и не вижу причин
-    // этого не делать.
-    // Собственно тут у нас при обновлении ответов
-    // юзера, последний данный ответ отправляется на
-    // сервер для записи в json файл
-    useEffect(() => {
-        // миунс найден, при объявлении стейта
-        // он также отрабатывает, поэтому
-        // тут теперь костыль с условием
-        if (quizData.userAnswers.length === 0) {
-            // console.log(0);
-        } else {
-            // console.log(1);
-            postAnswer({
-                // вот это должен быть айдишник "сессии"
-                // чтобы дальше отличать результаты
-                // для каждой сессии в БД создаётся
-                // уникальный json файл, в котором далее
-                // и хранятся данные об ответах юзера
-                // во время конкретной сессии
-                // вообще то можно наверное записать всё
-                // в один json файл, но я решил сделать
-                // разделение и пока не вижу минусов
-                // (возможно в дальнейшем переделаю,
-                // но пока версия с разными файлами мне
-                // нравится больше в виду удобства)
-                sessionId: quizData.sessionId,
-                answer: quizData.userAnswers[quizData.userAnswers.length - 1],
-            });
-        }
-    }, [quizData.userAnswers]);
-
     // тут та же история, я пока не приудмал как лучше
     // сделать менеджмент запросов, и в итоге он идёт
     // на сервер, тогда, когда стейт получает значение
@@ -347,13 +406,13 @@ export function App() {
                                     if (!quizData.isResultsBlockStateActive) {
                                         return (
                                             <>
-                                                {quizTestsArrayState ==
+                                                {quizWindowsState.quizTestsArray ==
                                                 undefined ? (
                                                     <div>loading...</div>
                                                 ) : (
                                                     <Choose
                                                         quizTestsArray={
-                                                            quizTestsArrayState
+                                                            quizWindowsState.quizTestsArray
                                                         }
                                                         quizData={quizData}
                                                         setQuizData={
@@ -373,7 +432,28 @@ export function App() {
                                     else {
                                         return (
                                             <>
-                                                <Results />
+                                                <Results
+                                                    quizWindowsState={
+                                                        quizWindowsState
+                                                    }
+                                                    setQuizWindowsState={
+                                                        setQuizWindowsState
+                                                    }
+                                                    resultsState={resultsState}
+                                                    setResultsState={
+                                                        setResultsState
+                                                    }
+                                                />
+                                            </>
+                                        );
+                                        return (
+                                            <>
+                                                {quizWindowsState.resultsWindowState ==
+                                                undefined ? (
+                                                    <div>loading...</div>
+                                                ) : (
+                                                    <Results />
+                                                )}
                                             </>
                                         );
                                     }
@@ -392,7 +472,9 @@ export function App() {
                                             ) {
                                                 // аругмент это номер страницы
                                                 // в теории должен быть
-                                                fetchResults(1);
+                                                fetchResults(
+                                                    resultsState.pageId
+                                                );
                                             }
                                             setQuizData((prev) => {
                                                 return {

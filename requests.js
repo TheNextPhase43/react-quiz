@@ -32,18 +32,18 @@ function fetchResultsAnswers(sessionId) {
         });
 }
 
-function fetchResults(pageNumber) {
-    fetch(`http://localhost:3003/answerspage${pageNumber}`, {
-        method: "GET",
-    })
-        .then((data) => {
-            return data.json();
-        })
-        .then((jsonData) => {
-            // console.log(jsonData);
-            console.log(jsonData);
-        });
-}
+// function fetchResults(pageNumber) {
+//     fetch(`http://localhost:3003/answerspage${pageNumber}`, {
+//         method: "GET",
+//     })
+//         .then((data) => {
+//             return data.json();
+//         })
+//         .then((jsonData) => {
+//             // console.log(jsonData);
+//             savedAnswersPageFromDB = jsonData;
+//         });
+// }
 
 // вот это вот помещается в глобальную
 // область видимости и далее используется
@@ -52,9 +52,15 @@ function fetchResults(pageNumber) {
 // let quizTestsArray;
 // fetchTests();
 
-// тоже дальше вероятно пойдёт
-// в экспорт
-let userAnswers;
+// переменная для хранения объектов результатов
+// юзера, тогда когда просматривается компонент
+// сохранённых результатов прохождения теста
+// (этот нейминг просто имба)
+// page, потому что при каждом пролистывании
+// страницы в компоненте вызывается отдельный
+// запрос на пять (или сколько осталось)
+// сохранённых результатов прохождения теста
+// let savedAnswersPageFromDB = undefined;
 
 // вызывается каждый раз когда юзер отвечает
 // на вопрос через useEffect в app.jsx
