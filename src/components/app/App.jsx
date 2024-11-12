@@ -443,6 +443,7 @@ export function App() {
                                                     setResultsState={
                                                         setResultsState
                                                     }
+                                                    fetchResults={fetchResults}
                                                 />
                                             </>
                                         );
@@ -466,6 +467,7 @@ export function App() {
                                 `}
                                 >
                                     <button
+                                        className={s.showResultsButton}
                                         onClick={() => {
                                             if (
                                                 !quizData.isResultsBlockStateActive
